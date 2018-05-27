@@ -7,6 +7,7 @@ package com.projectx.main.RestUtil;
 
 
 
+import com.projectx.main.modelservice.mapsvendor.MapsVendor;
 import com.projectx.main.modelservice.vendor.Merchandise;
 
 
@@ -28,7 +29,11 @@ import retrofit2.http.Query;
 */
 
  @GET("fetchMerchandise")
- Call<List<Merchandise>> getListMerchant1(@Query("vendorId") String vendorId, @Query("categoryId") String categoryId, @Query("hasChild") String hasChild, @Query("currentDate") String currentDate, @Query("lat") String lat, @Query("long") String lon);
+ Call<List<Merchandise>> getListMerchant1(@Query("vendorId") String vendorId, @Query("categoryId") String categoryId, @Query("hasChild") String hasChild, @Query("currentDate") String currentDate, @Query("lat") String lat, @Query("long") String lon,@Query("customerPhone") String customerPhone);
+
+
+ @GET("fetchVendorsLocation")
+ Call<List<MapsVendor>> getMapVendorLocation(@Query("vendorId") String vendorId, @Query("categoryId") String categoryId, @Query("hasChild") String hasChild, @Query("lat") String lat, @Query("long") String lon);
 
 
  /*@Multipart

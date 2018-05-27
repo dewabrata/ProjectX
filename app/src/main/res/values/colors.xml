@@ -312,7 +312,8 @@
     <color name="grey_800">#424242</color>
     <color name="grey_900">#212121</color>
     <color name="grey_1000">#1a1a1a</color>
-
+<color name ="hunter">#ffe6cd</color>
+    <color name="toolbarx">#ff7f00</color>
 
     <!--for random color generator -->
     <array name="mdcolor_random">

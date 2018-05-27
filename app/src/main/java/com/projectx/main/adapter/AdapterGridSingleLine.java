@@ -46,15 +46,14 @@ public class AdapterGridSingleLine extends RecyclerView.Adapter<RecyclerView.Vie
     public class OriginalViewHolder extends RecyclerView.ViewHolder {
         public ImageView image;
         public TextView name;
-        public View lyt_parent;
-        public ImageButton imgButton;
+
 
         public OriginalViewHolder(View v) {
             super(v);
             image = (ImageView) v.findViewById(R.id.image);
             name = (TextView) v.findViewById(R.id.name);
-            lyt_parent = (View) v.findViewById(R.id.lyt_parent);
-            imgButton = (ImageButton) v.findViewById(R.id.imgButton);
+
+
         }
     }
 
@@ -85,12 +84,7 @@ public class AdapterGridSingleLine extends RecyclerView.Adapter<RecyclerView.Vie
                     }
                 }
             });
-            view.imgButton.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    Toast.makeText(ctx,"Maps",Toast.LENGTH_SHORT).show();
-                }
-            });
+
 
 
         }

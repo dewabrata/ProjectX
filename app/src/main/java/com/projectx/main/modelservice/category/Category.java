@@ -3,16 +3,28 @@ package com.projectx.main.modelservice.category;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import com.projectx.main.Application.AppController;
+import com.raizlabs.android.dbflow.annotation.Column;
+import com.raizlabs.android.dbflow.annotation.PrimaryKey;
+import com.raizlabs.android.dbflow.annotation.Table;
+import com.raizlabs.android.dbflow.structure.BaseModel;
+
 /**
  * Created by user on 3/11/2018.
  */
+@Table(database = AppController.class)
+public class Category extends BaseModel implements Parcelable {
 
-public class Category implements Parcelable {
-
+    @Column
+    @PrimaryKey
     private String id;
+    @Column
     private String  imageUrl;
+    @Column
     private String name;
-    private Boolean active;
+    @Column
+    private Boolean isActive;
+    @Column
     private String thumbnailUrl;
 
 
@@ -40,12 +52,12 @@ public class Category implements Parcelable {
         this.name = name;
     }
 
-    public Boolean getActive() {
-        return active;
+    public Boolean isActive() {
+        return isActive;
     }
 
-    public void setActive(Boolean active) {
-        this.active = active;
+    public void setActive(Boolean isActive) {
+        this.isActive = isActive;
     }
 
     public String getThumbnailUrl() {
@@ -55,6 +67,8 @@ public class Category implements Parcelable {
     public void setThumbnailUrl(String thumbnailUrl) {
         this.thumbnailUrl = thumbnailUrl;
     }
+
+
 
 
 
@@ -68,9 +82,9 @@ public class Category implements Parcelable {
         dest.writeString(this.id);
         dest.writeString(this.imageUrl);
         dest.writeString(this.name);
-        dest.writeByte((byte) (this.active ? 1 : 0));
-
+        dest.writeByte((byte) (this.isActive ? 1 : 0));
         dest.writeString(this.thumbnailUrl);
+
     }
 
     public Category() {
@@ -80,8 +94,9 @@ public class Category implements Parcelable {
         this.id = in.readString();
         this.imageUrl = in.readString();
         this.name = in.readString();
-        this.active =in.readByte() != 0;
+        this.isActive =in.readByte() != 0;
         this.thumbnailUrl = in.readString();
+
     }
 
     public static final Parcelable.Creator<Category> CREATOR = new Parcelable.Creator<Category>() {

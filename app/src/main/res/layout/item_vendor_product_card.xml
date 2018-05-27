@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <android.support.v7.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:card_view="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    xmlns:card_view="http://schemas.android.com/tools"
 
     app:cardUseCompatPadding="true"
-    android:scaleType="centerCrop"
     card_view:cardBackgroundColor="@color/BlackTrans"
     card_view:cardCornerRadius="15dp"
     card_view:cardElevation="0dp">
@@ -30,15 +29,6 @@
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
-                <ImageButton
-                    android:id="@+id/imgStar"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:background="@android:color/transparent"
-
-                    android:tint="@color/red_A100"
-                    app:srcCompat="@drawable/ic_star_border" />
-
                 <View
                     android:layout_width="@dimen/spacing_middle"
                     android:layout_height="0dp" />
@@ -54,8 +44,8 @@
                     android:layout_height="wrap_content"
                     android:background="@android:color/transparent"
 
-                    android:tint="@color/red_A100"
-                    app:srcCompat="@drawable/ic_shopping_cart" />
+                    android:tint="@color/red_A200"
+                    app:srcCompat="@drawable/ic_favorite_border" />
 
                 <View
                     android:layout_width="@dimen/spacing_middle"
@@ -75,6 +65,7 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_margin="3dp"
                 android:orientation="horizontal">
 
                 <View
@@ -91,17 +82,18 @@
                     android:textAppearance="@style/TextAppearance.AppCompat.Subhead"
                     android:textColor="@color/grey_90" />
 
-                <TextView
-                    android:id="@+id/price"
-                    android:layout_width="wrap_content"
-                    android:layout_height="35dp"
-                    android:text="$ 80.00"
-
-                    android:textColor="@color/colorPrimary" />
-
                 <View
                     android:layout_width="@dimen/spacing_small"
                     android:layout_height="0dp" />
+
+                <ImageButton
+                    android:id="@+id/pindrop"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+
+                    android:background="@android:color/transparent"
+                    android:tint="@color/red_A100"
+                    app:srcCompat="@drawable/ic_pin_drop" />
 
             </LinearLayout>
 

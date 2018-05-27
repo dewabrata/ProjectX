@@ -15,16 +15,26 @@ import android.widget.Toast;
 
 import com.beloo.widget.chipslayoutmanager.SpacingItemDecoration;
 import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
+import com.projectx.main.Application.AppController;
 import com.projectx.main.R;
 import com.projectx.main.RestUtil.APIClient;
 import com.projectx.main.RestUtil.APIInterfacesRest;
 import com.projectx.main.adapter.AdapterGridShopProductCard;
+import com.projectx.main.modelservice.User.UserMobile;
+import com.projectx.main.modelservice.category.Category;
 import com.projectx.main.modelservice.vendor.Merchandise;
+import com.projectx.main.modelservice.vendor.Merchandise_Table;
 import com.projectx.main.modelservice.vendor.Vendor;
 import com.projectx.main.utils.Tools;
+import com.raizlabs.android.dbflow.config.FlowManager;
+import com.raizlabs.android.dbflow.sql.language.SQLite;
+import com.raizlabs.android.dbflow.structure.database.DatabaseWrapper;
+import com.raizlabs.android.dbflow.structure.database.transaction.ProcessModelTransaction;
+import com.raizlabs.android.dbflow.structure.database.transaction.Transaction;
 
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import retrofit2.Call;
@@ -38,7 +48,7 @@ public class ShoppingProductGrid extends AppCompatActivity {
     private RecyclerView recyclerView;
     private AdapterGridShopProductCard mAdapter;
 
-    List<Merchandise> items;
+    List<Merchandise> items, listItems;
 
     Vendor dataVendor;
 
@@ -61,10 +71,11 @@ public class ShoppingProductGrid extends AppCompatActivity {
 
     private void initToolbar() {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        toolbar.setNavigationIcon(R.drawable.ic_menu);
+        toolbar.setNavigationIcon(R.drawable.ic_arrow_back);
         setSupportActionBar(toolbar);
         getSupportActionBar().setTitle("Products");
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        Tools.setSystemBarColor(this, R.color.toolbarx);
     }
 
     private void initComponent() {
@@ -75,9 +86,12 @@ public class ShoppingProductGrid extends AppCompatActivity {
         recyclerView.setNestedScrollingEnabled(false);
 
 
+        listItems =  (ArrayList) SQLite.select().from(Merchandise.class)
+                .where(Merchandise_Table.vendorId.eq(dataVendor.getId()))
+                     .queryList();
 
         //set data and list adapter
-        mAdapter = new AdapterGridShopProductCard(this, items);
+        mAdapter = new AdapterGridShopProductCard(this, listItems);
         recyclerView.setAdapter(mAdapter);
 
         // on item list clicked
@@ -88,12 +102,7 @@ public class ShoppingProductGrid extends AppCompatActivity {
             }
         });
 
-        mAdapter.setOnMoreButtonClickListener(new AdapterGridShopProductCard.OnMoreButtonClickListener() {
-            @Override
-            public void onItemClick(View view, Merchandise obj, MenuItem item) {
-                Snackbar.make(parent_view, obj.getName() + " (" + item.getTitle() + ") clicked", Snackbar.LENGTH_SHORT).show();
-            }
-        });
+
 
     }
 
@@ -125,23 +134,34 @@ public class ShoppingProductGrid extends AppCompatActivity {
         progressDialog.setTitle("Loading");
         progressDialog.show();
         String child = "0";
-        if (dataVendor.getHasChild()){
+        if (dataVendor.isHasChild()){
             child ="1";
         }else{
             child="0";
         }
-        Call<List<Merchandise>> merchantCall = apiInterface.getListMerchant1(dataVendor.getId(),dataVendor.getCategoryId(),child,"20181303","0.0","0.0");
+
+        String nophone = "";
+        List<UserMobile> lstUser =  (ArrayList) SQLite.select().from(UserMobile.class)
+                .queryList();
+
+
+
+        if (lstUser.size()>0){
+            nophone = lstUser.get(0).getId();
+        }
+        Call<List<Merchandise>> merchantCall = apiInterface.getListMerchant1(dataVendor.getId(),dataVendor.getCategoryId(),child,Tools.getDateNow(),Tools.latitude,Tools.longitude,nophone);
         merchantCall.enqueue(new Callback<List<Merchandise>>() {
             @Override
             public void onResponse(Call<List<Merchandise>> call, Response<List<Merchandise>> response) {
                 progressDialog.dismiss();
-               items = response.body();
+                items = response.body();
 
                 if (items !=null) {
 
 
-                       initToolbar();
-                       initComponent();
+
+                       savedb();
+
 
 
                 }else{
@@ -165,5 +185,41 @@ public class ShoppingProductGrid extends AppCompatActivity {
         });
 
     }
+
+
+    public void savedb(){
+
+        FlowManager.getDatabase(AppController.class)
+                .beginTransactionAsync(new ProcessModelTransaction.Builder<>(
+                        new ProcessModelTransaction.ProcessModel<Merchandise>() {
+                            @Override
+                            public void processModel(Merchandise orderItem, DatabaseWrapper wrapper) {
+
+                                orderItem.save();
+
+
+                            }
+
+                        }).addAll(items).build())  // add elements (can also handle multiple)
+                .error(new Transaction.Error() {
+                    @Override
+                    public void onError(Transaction transaction, Throwable error) {
+                        Toast.makeText(getApplicationContext(),error.getMessage(),Toast.LENGTH_LONG).show();
+                    }
+                })
+                .success(new Transaction.Success() {
+                    @Override
+                    public void onSuccess(Transaction transaction) {
+                        Toast.makeText(getApplicationContext(),"Data Tersimpan",Toast.LENGTH_LONG).show();
+                        initToolbar();
+                        initComponent();
+                    }
+                }).build().execute();
+
+
+    }
+
+
+
 }
 

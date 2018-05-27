@@ -1,7 +1,10 @@
 package com.projectx.main.adapter;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.res.ColorStateList;
+import android.graphics.Paint;
+import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.RecyclerView;
@@ -12,12 +15,31 @@ import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.SetOptions;
 import com.projectx.main.R;
 import com.projectx.main.RestUtil.AppUtil;
+import com.projectx.main.activity.MainMenu;
+import com.projectx.main.activity.PhoneActivation;
+import com.projectx.main.modelservice.User.FirebaseFav;
+import com.projectx.main.modelservice.User.UserMobile;
+import com.projectx.main.modelservice.User.UserMobile_Table;
+import com.projectx.main.modelservice.favourite.Cart;
+import com.projectx.main.modelservice.favourite.Favourite;
+import com.projectx.main.modelservice.favourite.Favourite_Table;
+import com.projectx.main.modelservice.favourite.Star;
+import com.projectx.main.modelservice.favourite.Star_Table;
 import com.projectx.main.modelservice.vendor.Merchandise;
+import com.projectx.main.modelservice.vendor.Vendor;
 import com.projectx.main.utils.ImageUtil;
+import com.projectx.main.utils.Tools;
+import com.raizlabs.android.dbflow.sql.language.SQLite;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,15 +50,12 @@ public class AdapterGridShopProductCard extends RecyclerView.Adapter<RecyclerVie
 
     private Context ctx;
     private OnItemClickListener mOnItemClickListener;
-    private OnMoreButtonClickListener onMoreButtonClickListener;
 
     public void setOnItemClickListener(final OnItemClickListener mItemClickListener) {
         this.mOnItemClickListener = mItemClickListener;
     }
 
-    public void setOnMoreButtonClickListener(final OnMoreButtonClickListener onMoreButtonClickListener) {
-        this.onMoreButtonClickListener = onMoreButtonClickListener;
-    }
+
 
     public AdapterGridShopProductCard(Context context, List<Merchandise> items) {
         this.items = items;
@@ -47,17 +66,18 @@ public class AdapterGridShopProductCard extends RecyclerView.Adapter<RecyclerVie
         public ImageView image;
         public TextView title;
         public TextView price;
-        public ImageButton more;
+
         public View lyt_parent;
-        public ImageButton imgStar;
+        public ImageButton imgStar,imgShop;
 
         public OriginalViewHolder(View v) {
             super(v);
             image = (ImageView) v.findViewById(R.id.image);
             title = (TextView) v.findViewById(R.id.title);
             price = (TextView) v.findViewById(R.id.price);
-            more = (ImageButton) v.findViewById(R.id.more);
+
             imgStar = (ImageButton) v.findViewById(R.id.imgStar);
+            imgShop = (ImageButton) v.findViewById(R.id.imgShop);
             lyt_parent = (View) v.findViewById(R.id.lyt_parent);
         }
     }
@@ -79,6 +99,7 @@ public class AdapterGridShopProductCard extends RecyclerView.Adapter<RecyclerVie
             final Merchandise p = items.get(position);
             view.title.setText(p.getName());
             view.price.setText("Rp."+ AppUtil.formatCurrency(p.getPrice()));
+            view.price.setPaintFlags(view.price.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
           //  Tools.displayImageOriginal(ctx, view.image, p.image);
             ImageUtil.displayImage(view.image,p.getThumbnailUrl(),null);
             view.lyt_parent.setOnClickListener(new View.OnClickListener() {
@@ -90,23 +111,37 @@ public class AdapterGridShopProductCard extends RecyclerView.Adapter<RecyclerVie
                 }
             });
 
-            view.more.setOnClickListener(new View.OnClickListener() {
+            List<Star> lstFav =  (ArrayList) SQLite.select().from(Star.class)
+                    .where(Star_Table.merchantId.eq(items.get(position).getId()))
+                    .queryList();
+
+            if (lstFav.size()>0){
+                view.imgStar.setImageResource(R.drawable.ic_star);
+                view.imgStar.setImageTintList(ColorStateList.valueOf(ContextCompat.getColor(ctx, R.color.red_A100)));
+
+            }
+
+            view.imgShop.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    if (onMoreButtonClickListener == null) return;
-                    onMoreButtonClick(view, p);
+                    Cart cart = new Cart(items.get(position).getId());
+                    cart.save();
                 }
             });
 
             view.imgStar.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View viewx) {
-                 if(view.imgStar.getImageTintList() == ColorStateList.valueOf(ContextCompat.getColor(ctx, R.color.red_A100))){
-                        view.imgStar.setImageResource(R.drawable.ic_favorite_border);
-                        view.imgStar.setImageTintList(ColorStateList.valueOf(ContextCompat.getColor(ctx, R.color.red_A200)));
+                 if(view.imgStar.getImageTintList() == ColorStateList.valueOf(ContextCompat.getColor(ctx, R.color.red_A200))){
+                        view.imgStar.setImageResource(R.drawable.ic_star_border);
+                        view.imgStar.setImageTintList(ColorStateList.valueOf(ContextCompat.getColor(ctx, R.color.red_A100)));
+                     Star star = new Star(items.get(position).getId());
+                     star.delete();
                     }else{
-                     view.imgStar.setImageResource(R.drawable.ic_favorites);
-                     view.imgStar.setImageTintList(ColorStateList.valueOf(ContextCompat.getColor(ctx, R.color.red_A100)));
+                     view.imgStar.setImageResource(R.drawable.ic_star);
+                     view.imgStar.setImageTintList(ColorStateList.valueOf(ContextCompat.getColor(ctx, R.color.red_A200)));
+                     Star star = new Star(items.get(position).getId());
+                     star.save();
                  }
 
                 }
@@ -114,18 +149,7 @@ public class AdapterGridShopProductCard extends RecyclerView.Adapter<RecyclerVie
         }
     }
 
-    private void onMoreButtonClick(final View view, final Merchandise p) {
-        PopupMenu popupMenu = new PopupMenu(ctx, view);
-        popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem item) {
-                onMoreButtonClickListener.onItemClick(view, p, item);
-                return true;
-            }
-        });
-        popupMenu.inflate(R.menu.menu_product_more);
-        popupMenu.show();
-    }
+
 
     @Override
     public int getItemCount() {
@@ -139,5 +163,7 @@ public class AdapterGridShopProductCard extends RecyclerView.Adapter<RecyclerVie
     public interface OnMoreButtonClickListener {
         void onItemClick(View view, Merchandise obj, MenuItem item);
     }
+
+
 
 }

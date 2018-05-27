@@ -1,5 +1,6 @@
 package com.projectx.main.activity;
 
+import android.app.ProgressDialog;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomSheetBehavior;
@@ -19,8 +20,20 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.projectx.main.R;
+import com.projectx.main.RestUtil.APIClient;
+import com.projectx.main.RestUtil.APIInterfacesRest;
+import com.projectx.main.modelservice.mapsvendor.MapsVendor;
+import com.projectx.main.modelservice.vendor.Merchandise;
 import com.projectx.main.modelservice.vendor.Vendor;
 import com.projectx.main.utils.Tools;
+
+import org.json.JSONObject;
+
+import java.util.List;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 
 public class BottomSheetMap extends AppCompatActivity {
@@ -37,12 +50,67 @@ public class BottomSheetMap extends AppCompatActivity {
         dataVendor =  getIntent().getParcelableExtra("data");
 
         if (dataVendor !=null) {
-            initMapFragment();
-            initComponent();
+        getData();
         }
         Toast.makeText(this, "Swipe up bottom sheet", Toast.LENGTH_SHORT).show();
     }
 
+
+    APIInterfacesRest apiInterface;
+    ProgressDialog progressDialog;
+    List<MapsVendor> items;
+
+
+
+    private void getData(){
+        apiInterface = APIClient.getClient().create(APIInterfacesRest.class);
+        if(progressDialog == null) {
+            progressDialog = new ProgressDialog(BottomSheetMap.this);
+        }
+        progressDialog.setTitle("Loading");
+        progressDialog.show();
+        String child = "0";
+        if (dataVendor.isHasChild()){
+            child ="1";
+        }else{
+            child="0";
+        }
+        Call<List<MapsVendor>> merchantCall = apiInterface.getMapVendorLocation(dataVendor.getId(),dataVendor.getCategoryId(),child,dataVendor.getLat().toString(),dataVendor.getLon().toString());
+        merchantCall.enqueue(new Callback<List<MapsVendor>>() {
+            @Override
+            public void onResponse(Call<List<MapsVendor>> call, Response<List<MapsVendor>> response) {
+                progressDialog.dismiss();
+                items = response.body();
+
+                if (items !=null) {
+
+
+                    initMapFragment();
+                    initComponent();
+
+
+
+                }else{
+
+                    try {
+                        JSONObject jObjError = new JSONObject(response.errorBody().string());
+                        Toast.makeText(BottomSheetMap.this, jObjError.getString("message"), Toast.LENGTH_LONG).show();
+                    } catch (Exception e) {
+                        Toast.makeText(BottomSheetMap.this, e.getMessage(), Toast.LENGTH_LONG).show();
+                    }
+                }
+
+            }
+
+            @Override
+            public void onFailure(Call<List<MapsVendor>> call, Throwable t) {
+                progressDialog.dismiss();
+                Toast.makeText(getApplicationContext(),"Maaf koneksi bermasalah",Toast.LENGTH_LONG).show();
+                call.cancel();
+            }
+        });
+
+    }
 
     private void initComponent() {
 

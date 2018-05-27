@@ -6,49 +6,70 @@ import android.os.Parcelable;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
+import com.projectx.main.Application.AppController;
+import com.raizlabs.android.dbflow.annotation.Column;
+import com.raizlabs.android.dbflow.annotation.PrimaryKey;
+import com.raizlabs.android.dbflow.annotation.Table;
+import com.raizlabs.android.dbflow.structure.BaseModel;
 
-public class Merchandise implements Serializable, Parcelable
+@Table(database = AppController.class)
+public class Merchandise extends BaseModel implements Serializable, Parcelable
 {
 
+    @Column
     @SerializedName("startDate")
     @Expose
     private String startDate;
+    @Column
     @SerializedName("categoryId")
     @Expose
     private String categoryId;
+    @Column
     @SerializedName("imageUrl")
     @Expose
     private String imageUrl;
+    @Column
     @SerializedName("promoPrice")
     @Expose
     private String promoPrice;
+    @Column
     @SerializedName("price")
     @Expose
     private String price;
+    @Column
     @SerializedName("endDate")
     @Expose
     private int endDate;
+    @Column
     @SerializedName("active")
     @Expose
     private boolean active;
+    @Column
     @SerializedName("itemId")
     @Expose
     private String itemId;
+    @Column
     @SerializedName("name")
     @Expose
     private String name;
+    @Column
     @SerializedName("thumbnailUrl")
     @Expose
     private String thumbnailUrl;
     @SerializedName("favourite")
     @Expose
     private int favourite;
+    @Column
     @SerializedName("vendorId")
     @Expose
     private String vendorId;
+    @Column
+    @PrimaryKey
     @SerializedName("id")
     @Expose
     private String id;
+
+
     public final static Parcelable.Creator<Merchandise> CREATOR = new Creator<Merchandise>() {
 
 

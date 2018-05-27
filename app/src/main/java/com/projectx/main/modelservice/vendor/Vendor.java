@@ -4,23 +4,38 @@ import android.os.Parcel;
 import android.os.Parcelable;
 
 import com.google.firebase.firestore.PropertyName;
+import com.projectx.main.Application.AppController;
+import com.raizlabs.android.dbflow.annotation.Column;
+import com.raizlabs.android.dbflow.annotation.PrimaryKey;
+import com.raizlabs.android.dbflow.annotation.Table;
+import com.raizlabs.android.dbflow.structure.BaseModel;
 
 /**
  * Created by user on 3/12/2018.
  */
+@Table(database = AppController.class)
+public class Vendor extends BaseModel implements Parcelable {
 
-public class Vendor implements Parcelable {
 
-
+    @Column
+    @PrimaryKey
     private String id;
+    @Column
     private String imageUrl;
-    private Float lat;
+    @Column
+    private Double lat;
     @PropertyName("long")
-    private Float lon;
+    @Column
+    private Double lon;
+    @Column
     private String name;
+    @Column
     private String parentId;
+    @Column
     private String thumbnailUrl;
+    @Column
     private Boolean hasChild;
+    @Column
     private String categoryId;
 
 
@@ -52,19 +67,19 @@ public class Vendor implements Parcelable {
         this.imageUrl = imageUrl;
     }
 
-    public Float getLat() {
+    public Double getLat() {
         return lat;
     }
 
-    public void setLat(Float lat) {
+    public void setLat(Double lat) {
         this.lat = lat;
     }
     @PropertyName("long")
-    public Float getLon() {
+    public Double getLon() {
         return lon;
     }
     @PropertyName("long")
-    public void setLon(Float lon) {
+    public void setLon(Double lon) {
         this.lon = lon;
     }
 
@@ -92,7 +107,7 @@ public class Vendor implements Parcelable {
         this.thumbnailUrl = thumbnailUrl;
     }
 
-    public Boolean getHasChild() {
+    public Boolean isHasChild() {
         return hasChild;
     }
 
@@ -110,8 +125,8 @@ public class Vendor implements Parcelable {
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeString(this.id);
         dest.writeString(this.imageUrl);
-        dest.writeFloat(this.lat);
-        dest.writeFloat(this.lon);
+        dest.writeDouble(this.lat);
+        dest.writeDouble(this.lon);
         dest.writeString(this.name);
         dest.writeString(this.parentId);
         dest.writeString(this.thumbnailUrl);
@@ -126,8 +141,8 @@ public class Vendor implements Parcelable {
     protected Vendor(Parcel in) {
         this.id = in.readString();
         this.imageUrl = in.readString();
-        this.lat = in.readFloat();
-        this.lon = in.readFloat();;
+        this.lat = in.readDouble();
+        this.lon = in.readDouble();;
         this.name = in.readString();
         this.parentId = in.readString();
         this.thumbnailUrl = in.readString();

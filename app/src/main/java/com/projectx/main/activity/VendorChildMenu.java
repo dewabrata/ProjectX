@@ -97,7 +97,7 @@ public class VendorChildMenu extends AppCompatActivity {
                             // on item list clicked
                             mAdapter.setOnItemClickListener(new AdapterGridSingleLineVendor.OnItemClickListener() {
                                 @Override
-                                public void onItemClick(View view, Integer obj, int position) {
+                                public void onItemClick(View view, Vendor obj, int position) {
 
                                 }
 
@@ -125,6 +125,7 @@ public class VendorChildMenu extends AppCompatActivity {
         setSupportActionBar(toolbar);
         getSupportActionBar().setTitle("Categories");
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        Tools.setSystemBarColor(this, R.color.toolbarx);
     }
 
     private void initComponent() {

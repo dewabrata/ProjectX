@@ -2,12 +2,18 @@ package com.projectx.main.activity;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.graphics.PorterDuff;
 import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.design.widget.TabLayout;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.GridLayoutManager;
@@ -19,27 +25,41 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
+import android.widget.Toast;
 
 
 import com.balysv.materialripple.MaterialRippleLayout;
 import com.beloo.widget.chipslayoutmanager.SpacingItemDecoration;
+import com.github.florent37.rxgps.RxGps;
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
 import com.projectx.main.R;
 import com.projectx.main.adapter.AdapterGridSingleLine;
+import com.projectx.main.fragment.CardFragment;
+import com.projectx.main.fragment.CategoryFragment;
+import com.projectx.main.fragment.FavouriteFragment;
+import com.projectx.main.fragment.StarFragment;
+import com.projectx.main.modelservice.User.UserMobile;
 import com.projectx.main.modelservice.category.Category;
 import com.projectx.main.utils.ImageUtil;
+import com.projectx.main.utils.Messagebox;
 import com.projectx.main.utils.Tools;
 import com.projectx.main.utils.ViewAnimation;
+import com.raizlabs.android.dbflow.sql.language.SQLite;
 
 
 import java.util.ArrayList;
 import java.util.List;
 
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.schedulers.Schedulers;
 
 
 public class MainMenu extends AppCompatActivity {
@@ -50,8 +70,11 @@ public class MainMenu extends AppCompatActivity {
 
     private View parent_view;
 
-    private RecyclerView recyclerView;
+
     private AdapterGridSingleLine mAdapter;
+
+    private ViewPager viewPagerx;
+
 
     private List<String> listImage;
 
@@ -70,53 +93,31 @@ public class MainMenu extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_shopping_category_image);
 
-        ImageLoaderConfiguration config = new ImageLoaderConfiguration.Builder(this).build();
-        com.nostra13.universalimageloader.core.ImageLoader.getInstance().init(config);
-
         db = FirebaseFirestore.getInstance();
+        viewPagerx = (ViewPager) findViewById(R.id.viewpager);
+        setGPS();
+        setupViewPager(viewPagerx);
+        initToolbar();
+        initTab();
+
+
+
 
         parent_view = findViewById(R.id.parent_view);
 
-        initToolbar();
-        initComponent();
-        initTab();
-        getDataList();
+
         getCommercialList();
 
     }
 
-    private void getDataList(){
-        db.collection("category")
-                .get()
-                .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-                    @Override
-                    public void onComplete(@NonNull Task<QuerySnapshot> task) {
-                        if (task.isSuccessful()) {
-                            lstCategory = task.getResult().toObjects(Category.class);
-                            //set data and list adapter
-                            mAdapter = new AdapterGridSingleLine(MainMenu.this, lstCategory);
-                            recyclerView.setAdapter(mAdapter);
 
-                            // on item list clicked
-                            mAdapter.setOnItemClickListener(new AdapterGridSingleLine.OnItemClickListener() {
-                                @Override
-                                public void onItemClick(View view, Integer obj, int position) {
-
-                                }
-
-                        });
-
-
-
-
-                        } else {
-                            Log.d(TAG, "Error getting documents: ", task.getException());
-                        }
-                    }
-                });
-
-
-
+    private void setupViewPager(ViewPager viewPager) {
+        ViewPagerAdapter adapter = new ViewPagerAdapter(getSupportFragmentManager());
+        adapter.addFrag(new CategoryFragment(), "Category");
+        adapter.addFrag(new FavouriteFragment(), "Fav");
+        adapter.addFrag(new CardFragment(), "Cart");
+        adapter.addFrag(new StarFragment(), "Star");
+        viewPagerx.setAdapter(adapter);
     }
 
     private void getCommercialList(){
@@ -154,27 +155,20 @@ public class MainMenu extends AppCompatActivity {
 
     }
 
-
+    private ActionBar actionBar;
+    Toolbar toolbar;
     private void initToolbar() {
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        toolbar.setNavigationIcon(R.drawable.ic_menu);
+        toolbar = (Toolbar) findViewById(R.id.toolbar);
+        toolbar.setNavigationIcon(R.drawable.ic_home);
+      //  toolbar.getNavigationIcon().setColorFilter(getResources().getColor(R.color.overlay_light_90), PorterDuff.Mode.SRC_ATOP);
         setSupportActionBar(toolbar);
-        getSupportActionBar().setTitle("Categories");
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+        actionBar = getSupportActionBar();
+        actionBar.setTitle("Categories");
+        actionBar.setDisplayHomeAsUpEnabled(true);
+        Tools.setSystemBarColor(this, R.color.toolbarx);
     }
 
-    private void initComponent() {
-        recyclerView = (RecyclerView) findViewById(R.id.recyclerView);
-        recyclerView.setLayoutManager(new GridLayoutManager(this, 2));
-        recyclerView.addItemDecoration(new SpacingItemDecoration(2, Tools.dpToPx(getApplicationContext(), 3)));
-        recyclerView.setHasFixedSize(true);
-
-
-
-
-
-
-    }
 
 
     private ViewPager viewPager;
@@ -304,13 +298,14 @@ public class MainMenu extends AppCompatActivity {
 
     public void initTab(){
         tab_layout = (TabLayout) findViewById(R.id.tab_layout);
+        tab_layout.setupWithViewPager(viewPagerx);
 
-        tab_layout.addTab(tab_layout.newTab().setIcon(R.drawable.ic_home), 0);
+        tab_layout.getTabAt(0).setIcon(R.drawable.ic_home);
+        tab_layout.getTabAt(1).setIcon(R.drawable.ic_favorites);
+        tab_layout.getTabAt(2).setIcon(R.drawable.ic_shopping_cart);
+        tab_layout.getTabAt(3).setIcon(R.drawable.ic_star);
 
 
-        tab_layout.addTab(tab_layout.newTab().setIcon(R.drawable.ic_favorites), 1);
-        tab_layout.addTab(tab_layout.newTab().setIcon(R.drawable.ic_shopping_cart), 2);
-        tab_layout.addTab(tab_layout.newTab().setIcon(R.drawable.ic_star), 3);
 
         // set icon color pre-selected
         tab_layout.getTabAt(0).getIcon().setColorFilter(getResources().getColor(R.color.deep_orange_500), PorterDuff.Mode.SRC_IN);
@@ -318,27 +313,33 @@ public class MainMenu extends AppCompatActivity {
         tab_layout.getTabAt(2).getIcon().setColorFilter(getResources().getColor(R.color.grey_60), PorterDuff.Mode.SRC_IN);
         tab_layout.getTabAt(3).getIcon().setColorFilter(getResources().getColor(R.color.grey_60), PorterDuff.Mode.SRC_IN);
 
+
         tab_layout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
                 tab.getIcon().setColorFilter(getResources().getColor(R.color.deep_orange_500), PorterDuff.Mode.SRC_IN);
+                //toolbar.getNavigationIcon().setColorFilter(getResources().getColor(R.color.overlay_light_90), PorterDuff.Mode.SRC_ATOP);
                 switch (tab.getPosition()) {
                     case 0:
-
+                        actionBar.setTitle("Categories");
+                        toolbar.getNavigationIcon().setColorFilter(getResources().getColor(R.color.overlay_light_90), PorterDuff.Mode.SRC_ATOP);
                         break;
                     case 1:
-
+                        actionBar.setTitle("Favourites");
+                        toolbar.getNavigationIcon().setColorFilter(getResources().getColor(R.color.overlay_light_90), PorterDuff.Mode.SRC_ATOP);
                         break;
                     case 2:
-
+                        actionBar.setTitle("Cart");
+                        toolbar.getNavigationIcon().setColorFilter(getResources().getColor(R.color.overlay_light_90), PorterDuff.Mode.SRC_ATOP);
                         break;
                     case 3:
-
+                        actionBar.setTitle("Wishlist");
+                        toolbar.getNavigationIcon().setColorFilter(getResources().getColor(R.color.overlay_light_90), PorterDuff.Mode.SRC_ATOP);
                         break;
 
                 }
 
-                ViewAnimation.fadeOutIn(recyclerView);
+                ViewAnimation.fadeOutIn(viewPagerx);
             }
 
             @Override
@@ -353,4 +354,95 @@ public class MainMenu extends AppCompatActivity {
         });
     }
 
+    class ViewPagerAdapter extends FragmentPagerAdapter {
+        private final List<Fragment> mFragmentList = new ArrayList<>();
+        private final List<String> mFragmentTitleList = new ArrayList<>();
+
+        public ViewPagerAdapter(FragmentManager manager) {
+            super(manager);
+        }
+
+        @Override
+        public Fragment getItem(int position) {
+            return mFragmentList.get(position);
+        }
+
+        @Override
+        public int getCount() {
+            return mFragmentList.size();
+        }
+
+        public void addFrag(Fragment fragment, String title) {
+            mFragmentList.add(fragment);
+            mFragmentTitleList.add(title);
+        }
+
+        @Override
+        public CharSequence getPageTitle(int position) {
+          //  return mFragmentTitleList.get(position);
+            return null;
+        }
+    }
+
+    @Override
+    public void onBackPressed() {
+        Messagebox.showDialog(MainMenu.this, "Exit Application?", new String[]{"Yes", "No "}, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int i) {
+                dialog.dismiss();
+
+                if (i == 0) {
+
+                   updateStatus(false);
+                }
+            }
+        });
+    }
+
+
+    public void updateStatus(boolean online){
+
+        String nophone = "";
+        List<UserMobile> lstUser =  (ArrayList) SQLite.select().from(UserMobile.class)
+                .queryList();
+
+
+
+        if (lstUser.size()>0){
+            nophone = lstUser.get(0).getId();
+        }
+
+        DocumentReference updateStatus = db.collection("mobileUsers").document(nophone);
+
+
+        updateStatus
+                .update("online", online)
+                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                    @Override
+                    public void onSuccess(Void aVoid) {
+
+                        finish();
+                    }
+                })
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        Toast.makeText(getApplicationContext(),"Update status failed",Toast.LENGTH_SHORT).show();
+
+                        finish();
+                    }
+                });
+    }
+
+
+
+    public void setGPS(){
+        final RxGps rxGps = new RxGps(this);
+
+
+    }
+
+    public void displayError(String message) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+    }
 }

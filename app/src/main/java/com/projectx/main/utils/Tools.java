@@ -27,12 +27,17 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.request.target.BitmapImageViewTarget;
+import com.github.florent37.rxgps.RxGps;
 import com.google.android.gms.maps.GoogleMap;
 import com.projectx.main.R;
 
 
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
+
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.schedulers.Schedulers;
 
 public class Tools {
 
@@ -232,5 +237,15 @@ public class Tools {
 
         return titleCase.toString();
     }
+
+    public static String getDateNow(){
+        Calendar calendar = Calendar.getInstance();
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+
+        return sdf.format(calendar.getTime());
+    }
+
+    public static String longitude;
+    public static String latitude;
 
 }
